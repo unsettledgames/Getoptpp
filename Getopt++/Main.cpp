@@ -1,12 +1,6 @@
-#include <iostream>
-
 #define GETOPTPP_IMPL
+#define GETOPTPP_PRINT_OUTPUT
 #include "Getoptpp.h"
-
-/*
-*	- Call validate in number!
-	- Parse and validate should both be called by Getoptpp. In case of error it's possible to notify and print the error message (only print it once pls)
-*/
 
 int main(int argc, char** argv)
 {
@@ -17,19 +11,21 @@ int main(int argc, char** argv)
 	int testInt;
 	float testFloat;
 	double testDouble;
+	bool testBool;
 
 	{
-		Getoptpp opt(4, "");
+		Getoptpp opt(5, "Usage message");
 
+		opt.AddNumberParam<float>({ &testFloat, 'f', false });
 		opt.AddNumberParam<int>({ &testInt, 'i', false, [min, max](void* data) {
 				int num = *(int*)data;
 				if (num < min || num > max)
 					std::cout << "Lambda ok" << std::endl;
 				return *(int*)data == 15;
 			}});
-		opt.AddNumberParam<float>({ &testFloat, 'f', false });
 		opt.AddNumberParam<double>({ &testDouble, 'd', false });
-		opt.AddStringParam(StringParameter(&testString, 0, 's', false));
+		opt.AddStringParam({ &testString, 's', false });
+		opt.AddBoolParam({ &testBool, 'b' });
 
 		opt.Parse(argc, argv);
 
