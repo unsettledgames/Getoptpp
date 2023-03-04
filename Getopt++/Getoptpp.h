@@ -13,15 +13,6 @@
 #define STR_PARENT		Parameter(data, size, c, optional, validator)
 #define NUM_PARENT		Parameter(data, sizeof(T), c, optional, validator)
 
-#define STR_MIN_MAX		m_MinLength(0), m_MaxLength(ULLONG_MAX)
-#define NUM_MIN_MAX		m_Min(std::numeric_limits<T>().max()), m_Max(std::numeric_limits<T>().min())
-
-#define LONG_MIN_MAX	m_Min(LONG_MIN), m_Max(LONG_MAX)
-#define REAL_MIN_MAX	m_Min(DOUBLE_MIN), m_Max(DOUBLE_MAX)
-
-#define STR_POOL		m_Pool(nullptr), m_PoolSize(0)
-#define STR_REGEX		m_Regex("(.*?)"), m_RegexPattern("(.*?)")
-
 
 #ifndef _WIN32
 #include <unistd.h>
@@ -40,7 +31,6 @@ public:
 	Parameter(void* data, size_t size, char c, bool optional, std::function<bool(void*)> validator = {}) :
 		m_Data(data), m_DataSize(size), m_Char(c), m_Optional(optional), m_Validator(validator) {}
 
-	virtual bool Validate(void* data) { return true; }
 	virtual void Parse(void* data) {}
 
 protected:
@@ -58,11 +48,7 @@ class StringParameter : public Parameter
 public:
 	StringParameter() = default;
 	StringParameter(void* data, size_t size, char c, bool optional, std::function<bool(void*)> validator = {});
-	StringParameter(void* data, size_t size, char c, bool optional, std::string regex, std::function<bool(void*)> validator = {});
-	StringParameter(void* data, size_t size, char c, bool optional, std::string* pool, size_t poolSize, std::function<bool(void*)> validator = {});
-	StringParameter(void* data, size_t size, char c, bool optional, size_t minLength, size_t maxLength, std::function<bool(void*)> validator = {});
 
-	bool Validate(void* data) override;
 	void Parse(void* data) override;
 
 private:
@@ -83,9 +69,7 @@ class NumberParameter : public Parameter
 public:
 	NumberParameter() = default;
 	NumberParameter(void* data, char c, bool optional, std::function<bool(void*)> validator = {});
-	NumberParameter(void* data, char c, bool optional, T min, T max, std::function<bool(void*)> = {});
 	
-	bool Validate(void* data) override;
 	void Parse(void* data) override;
 
 private:
@@ -122,7 +106,6 @@ private:
 };
 
 #ifdef GETOPTPP_IMPL
-
 
 #ifdef _WIN32
 int getopt(int nargc, char* const nargv[], const char* ostr) {
@@ -194,57 +177,20 @@ int getopt(int nargc, char* const nargv[], const char* ostr) {
 void StringParameter::Parse(void* data)
 {
 	std::string param = std::string((char*)data);
-	if (Validate(&param))
-		*(std::string*)m_Data = param;
-}
-
-bool StringParameter::Validate(void* data)
-{
-	std::string str = *(std::string*)data;
-
-	// Length constraints
-	if (str.length() < m_MinLength || str.length() > m_MaxLength)
-		return false;
-	
-	// Pool constraints
-	bool inPool = m_PoolSize == 0;
-	for (uint32_t i = 0; i < m_PoolSize && !inPool; i++)
-		if (m_Pool[i] == str)
-			inPool = true;
-	if (!inPool)
-		return inPool;
-
-	// Regex constraint
-	m_Regex.assign(m_RegexPattern);
-	if (!std::regex_match(str.c_str(), m_Regex))
-		return false;
+	*(std::string*)m_Data = param;
 
 	if (m_Validator)
-		return m_Validator(data);
-	return true;
+		m_Validator(m_Data);
 }
 
 StringParameter::StringParameter(void* data, size_t size, char c, bool optional, std::function<bool(void*)> validator) :
-	STR_PARENT, STR_MIN_MAX, STR_POOL, STR_REGEX {}
-
-StringParameter::StringParameter(void* data, size_t size, char c, bool optional, std::string regex,
-	std::function<bool(void*)> validator) : STR_PARENT, STR_MIN_MAX, STR_POOL, m_Regex(std::regex(regex)), m_RegexPattern(regex){}
-
-StringParameter::StringParameter(void* data, size_t size, char c, bool optional, std::string* pool, size_t poolSize,
-	std::function<bool(void*)> validator) : STR_PARENT, STR_MIN_MAX, m_Pool(pool), m_PoolSize(poolSize), STR_REGEX{}
-
-StringParameter::StringParameter(void* data, size_t size, char c, bool optional, size_t minLength, size_t maxLength, 
-	std::function<bool(void*)> validator) : STR_PARENT, m_MinLength(minLength), m_MaxLength(maxLength), STR_POOL, STR_REGEX{}
+	STR_PARENT {}
 
 /************************************************************ NUMBER PARAMETER ***********************************************************/
 
 template<typename T>
 NumberParameter<T>::NumberParameter(void* data, char c, bool optional, std::function<bool(void*)> validator) :
-	NUM_PARENT, NUM_MIN_MAX {}
-
-template<typename T>
-NumberParameter<T>::NumberParameter(void* data, char c, bool optional, T min, T max, std::function<bool(void*)> validator) :
-	NUM_PARENT, m_Min(min), m_Max(max) {}
+	NUM_PARENT {}
 
 template <typename T>
 void NumberParameter<T>::Parse(void* data)
@@ -254,20 +200,9 @@ void NumberParameter<T>::Parse(void* data)
 	iss >> tmp;
 
 	memcpy(m_Data, &tmp, m_DataSize);
-}
-
-template <typename T>
-bool NumberParameter<T>::Validate(void* data)
-{
-	T param = *(T*)data;
-	if (param < m_Min || param > m_Max)
-		return false;
-
 	if (m_Validator)
-		return m_Validator(data);
-	return true;
+		m_Validator(m_Data);
 }
-
 
 /************************************************************ GETOPTPP ***********************************************************/
 
@@ -284,12 +219,17 @@ Getoptpp::~Getoptpp()
 
 void Getoptpp::Parse(int argc, char** argv)
 {
-	std::string optStr;
+	std::string optStr = "";
+	std::string notOptional = "";
+
 	for (uint32_t i = 0; i < m_CurrSize; i++)
 	{
 		optStr += m_Parameters[i]->m_Char;
 		if (!m_Parameters[i]->m_Optional)
+		{
 			optStr += ":";
+			notOptional += m_Parameters[i]->m_Char;
+		}
 	}
 
 	int c;
@@ -304,7 +244,10 @@ void Getoptpp::Parse(int argc, char** argv)
 		{
 			if (m_Parameters[i]->m_Char == c)
 			{
+				if (!m_Parameters[i]->m_Optional)
+					notOptional[notOptional.find(m_Parameters[i]->m_Char)] = '?';
 				found = true;
+
 				m_Parameters[i]->Parse((void*)optarg);
 			}
 		}
@@ -318,12 +261,25 @@ void Getoptpp::Parse(int argc, char** argv)
 
 	if (optind != argc - 1) 
 	{
+		bool allFound = true;
+		for (uint32_t i = 0; i < notOptional.length() && allFound; i++)
+		{
+			if (notOptional[i] != '?')
+			{
+				allFound = false;
+				std::cout << "Non-optional argument -" << notOptional[i] << " not specified" << std::endl;
+			}
+		}
+
+		if (allFound)
+		{
 #ifdef _WIN32
-		std::cerr << "Too many arguments or argument before other options\n";
+			std::cerr << "Too many arguments or argument before other options\n";
 #else
-		std::cerr << "Too many arguments\n";
+			std::cerr << "Too many arguments\n";
 #endif
-		std::cout << m_HelpMessage << std::endl;
+			std::cout << m_HelpMessage << std::endl;
+		}
 	}
 }
 
