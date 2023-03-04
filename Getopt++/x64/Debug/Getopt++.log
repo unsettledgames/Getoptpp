@@ -1,45 +1,35 @@
-﻿Build started 04/03/2023 12:38:17.
-Logging verbosity is set to: Normal.     1>Project "C:\dev\Getopt++\Getopt++\Getopt++\Getopt++.vcxproj" on node 2 (Build target(s)).
+﻿Build started 04/03/2023 14:58:09.
+Logging verbosity is set to: Normal.     1>Project "C:\dev\Getoptpp\Getopt++\Getopt++.vcxproj" on node 2 (Build target(s)).
      1>InitializeBuildStatus:
-         Creating "x64\Debug\Getopt++.tlog\unsuccessfulbuild" because "AlwaysCreate" was specified.
+         Touching "x64\Debug\Getopt++.tlog\unsuccessfulbuild".
        VcpkgTripletSelection:
          Using triplet "x64-windows" from "C:\Program Files\vcpkg\installed\x64-windows\"
          Using normalized configuration "Debug"
        ClCompile:
          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.31.31103\bin\HostX64\x64\CL.exe /c /I"C:\Program Files\vcpkg\installed\x64-windows\include" /ZI /JMC /nologo /W3 /WX- /diagnostics:column /sdl /Od /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /permissive- /Fo"x64\Debug\\" /Fd"x64\Debug\vc143.pdb" /external:W3 /Gd /TP /FC /errorReport:prompt Main.cpp
          Main.cpp
-     1>C:\dev\Getopt++\Getopt++\Getopt++\Getoptpp.h(215,33): warning C4101: 'e': unreferenced local variable
-     1>C:\dev\Getopt++\Getopt++\Getopt++\Getoptpp.h(229,114): warning C4267: 'initializing': conversion from 'size_t' to 'uint32_t', possible loss of data
-     1>C:\dev\Getopt++\Getopt++\Getopt++\Getoptpp.h(257,40): warning C4812: obsolete declaration style: please use 'NumberParameter<long>::NumberParameter' instead
-     1>C:\dev\Getopt++\Getopt++\Getopt++\Getoptpp.h(260,40): warning C4812: obsolete declaration style: please use 'NumberParameter<long>::NumberParameter' instead
-     1>C:\dev\Getopt++\Getopt++\Getopt++\Getoptpp.h(285,39): warning C4812: obsolete declaration style: please use 'NumberParameter<double>::NumberParameter' instead
-     1>C:\dev\Getopt++\Getopt++\Getopt++\Getoptpp.h(288,39): warning C4812: obsolete declaration style: please use 'NumberParameter<double>::NumberParameter' instead
+     1>C:\dev\Getoptpp\Getopt++\Getoptpp.h(234,112): warning C4267: 'initializing': conversion from 'size_t' to 'uint32_t', possible loss of data
        Link:
-         C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.31.31103\bin\HostX64\x64\link.exe /ERRORREPORT:PROMPT /OUT:"C:\dev\Getopt++\Getopt++\x64\Debug\Getopt++.exe" /INCREMENTAL /ILK:"x64\Debug\Getopt++.ilk" /NOLOGO /LIBPATH:"C:\Program Files\vcpkg\installed\x64-windows\debug\lib" /LIBPATH:"C:\Program Files\vcpkg\installed\x64-windows\debug\lib\manual-link" kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib "C:\Program Files\vcpkg\installed\x64-windows\debug\lib\*.lib" /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\dev\Getopt++\Getopt++\x64\Debug\Getopt++.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\dev\Getopt++\Getopt++\x64\Debug\Getopt++.lib" /MACHINE:X64 x64\Debug\Main.obj
-         Getopt++.vcxproj -> C:\dev\Getopt++\Getopt++\x64\Debug\Getopt++.exe
+         C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.31.31103\bin\HostX64\x64\link.exe /ERRORREPORT:PROMPT /OUT:"C:\dev\Getoptpp\x64\Debug\Getopt++.exe" /INCREMENTAL /ILK:"x64\Debug\Getopt++.ilk" /NOLOGO /LIBPATH:"C:\Program Files\vcpkg\installed\x64-windows\debug\lib" /LIBPATH:"C:\Program Files\vcpkg\installed\x64-windows\debug\lib\manual-link" kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib "C:\Program Files\vcpkg\installed\x64-windows\debug\lib\*.lib" /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\dev\Getoptpp\x64\Debug\Getopt++.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\dev\Getoptpp\x64\Debug\Getopt++.lib" /MACHINE:X64 x64\Debug\Main.obj
+         Getopt++.vcxproj -> C:\dev\Getoptpp\x64\Debug\Getopt++.exe
        AppLocalFromInstalled:
-         pwsh.exe -ExecutionPolicy Bypass -noprofile -File "C:\Program Files\vcpkg\scripts\buildsystems\msbuild\applocal.ps1" "C:\dev\Getopt++\Getopt++\x64\Debug\Getopt++.exe" "C:\Program Files\vcpkg\installed\x64-windows\debug\bin" "x64\Debug\Getopt++.tlog\Getopt++.write.1u.tlog" "x64\Debug\vcpkg.applocal.log"
+         pwsh.exe -ExecutionPolicy Bypass -noprofile -File "C:\Program Files\vcpkg\scripts\buildsystems\msbuild\applocal.ps1" "C:\dev\Getoptpp\x64\Debug\Getopt++.exe" "C:\Program Files\vcpkg\installed\x64-windows\debug\bin" "x64\Debug\Getopt++.tlog\Getopt++.write.1u.tlog" "x64\Debug\vcpkg.applocal.log"
          "pwsh.exe" non è riconosciuto come comando interno o esterno,
           un programma eseguibile o un file batch.
-         The command "pwsh.exe -ExecutionPolicy Bypass -noprofile -File "C:\Program Files\vcpkg\scripts\buildsystems\msbuild\applocal.ps1" "C:\dev\Getopt++\Getopt++\x64\Debug\Getopt++.exe" "C:\Program Files\vcpkg\installed\x64-windows\debug\bin" "x64\Debug\Getopt++.tlog\Getopt++.write.1u.tlog" "x64\Debug\vcpkg.applocal.log"" exited with code 9009.
-         "C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe" -ExecutionPolicy Bypass -noprofile -File "C:\Program Files\vcpkg\scripts\buildsystems\msbuild\applocal.ps1" "C:\dev\Getopt++\Getopt++\x64\Debug\Getopt++.exe" "C:\Program Files\vcpkg\installed\x64-windows\debug\bin" "x64\Debug\Getopt++.tlog\Getopt++.write.1u.tlog" "x64\Debug\vcpkg.applocal.log"
+         The command "pwsh.exe -ExecutionPolicy Bypass -noprofile -File "C:\Program Files\vcpkg\scripts\buildsystems\msbuild\applocal.ps1" "C:\dev\Getoptpp\x64\Debug\Getopt++.exe" "C:\Program Files\vcpkg\installed\x64-windows\debug\bin" "x64\Debug\Getopt++.tlog\Getopt++.write.1u.tlog" "x64\Debug\vcpkg.applocal.log"" exited with code 9009.
+         "C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe" -ExecutionPolicy Bypass -noprofile -File "C:\Program Files\vcpkg\scripts\buildsystems\msbuild\applocal.ps1" "C:\dev\Getoptpp\x64\Debug\Getopt++.exe" "C:\Program Files\vcpkg\installed\x64-windows\debug\bin" "x64\Debug\Getopt++.tlog\Getopt++.write.1u.tlog" "x64\Debug\vcpkg.applocal.log"
        FinalizeBuildStatus:
          Deleting file "x64\Debug\Getopt++.tlog\unsuccessfulbuild".
          Touching "x64\Debug\Getopt++.tlog\Getopt++.lastbuildstate".
-     1>Done Building Project "C:\dev\Getopt++\Getopt++\Getopt++\Getopt++.vcxproj" (Build target(s)).
+     1>Done Building Project "C:\dev\Getoptpp\Getopt++\Getopt++.vcxproj" (Build target(s)).
 
 Build succeeded.
 
-       "C:\dev\Getopt++\Getopt++\Getopt++\Getopt++.vcxproj" (Build target) (1) ->
+       "C:\dev\Getoptpp\Getopt++\Getopt++.vcxproj" (Build target) (1) ->
        (ClCompile target) -> 
-         C:\dev\Getopt++\Getopt++\Getopt++\Getoptpp.h(215,33): warning C4101: 'e': unreferenced local variable
-         C:\dev\Getopt++\Getopt++\Getopt++\Getoptpp.h(229,114): warning C4267: 'initializing': conversion from 'size_t' to 'uint32_t', possible loss of data
-         C:\dev\Getopt++\Getopt++\Getopt++\Getoptpp.h(257,40): warning C4812: obsolete declaration style: please use 'NumberParameter<long>::NumberParameter' instead
-         C:\dev\Getopt++\Getopt++\Getopt++\Getoptpp.h(260,40): warning C4812: obsolete declaration style: please use 'NumberParameter<long>::NumberParameter' instead
-         C:\dev\Getopt++\Getopt++\Getopt++\Getoptpp.h(285,39): warning C4812: obsolete declaration style: please use 'NumberParameter<double>::NumberParameter' instead
-         C:\dev\Getopt++\Getopt++\Getopt++\Getoptpp.h(288,39): warning C4812: obsolete declaration style: please use 'NumberParameter<double>::NumberParameter' instead
+         C:\dev\Getoptpp\Getopt++\Getoptpp.h(234,112): warning C4267: 'initializing': conversion from 'size_t' to 'uint32_t', possible loss of data
 
-    6 Warning(s)
+    1 Warning(s)
     0 Error(s)
 
-Time Elapsed 00:00:01.15
+Time Elapsed 00:00:02.14

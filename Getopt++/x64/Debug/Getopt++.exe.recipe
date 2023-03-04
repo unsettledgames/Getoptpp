@@ -2,7 +2,7 @@
 <Project>
   <ProjectOutputs>
     <ProjectOutput>
-      <FullPath>C:\dev\Getopt++\Getopt++\x64\Debug\Getopt++.exe</FullPath>
+      <FullPath>C:\dev\Getoptpp\x64\Debug\Getopt++.exe</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
   <ContentFiles />

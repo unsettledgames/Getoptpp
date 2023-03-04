@@ -4,9 +4,7 @@
 #include "Getoptpp.h"
 
 /*
-	- Make NumberParameter truly generic, expose common types to users
-	- The parse function is generic: if it contains a dot, try parsing it as a float, then as a double
-	- Same for integers. Try with short, then int, then long. Use signed version only if there's a -.
+	- Parse and validate should both be called by Getoptpp. In case of error it's possible to notify and print the error message (only print it once pls)
 */
 
 int main(int argc, char** argv)
@@ -18,8 +16,10 @@ int main(int argc, char** argv)
 	{
 		Getoptpp opt(4, "");
 
-		opt.AddIntParam(IntegerParameter(&testInt, sizeof(int), 'i', false));
-		opt.AddRealParam(RealParameter(&testFloat, sizeof(float), 'f', false));
+		opt.AddNumberParam<int>({ &testInt, 'i', false, [](void* data) {
+				return *(int*)data == 15;
+			}});
+		opt.AddNumberParam<float>({ &testFloat, 'f', false });
 		opt.AddStringParam(StringParameter(&testString, 0, 's', false));
 
 		opt.Parse(argc, argv);

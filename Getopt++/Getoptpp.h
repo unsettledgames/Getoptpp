@@ -2,15 +2,20 @@
 #define GETOPTPP_H
 
 #include <iostream>
+#include <sstream>
+#include <limits>
 #include <stdint.h>
 #include <stddef.h>
 #include <string>
 #include <functional>
 #include <regex>
 
-#define PARAM_PARENT	Parameter(data, size, c, optional, validator)
+#define STR_PARENT		Parameter(data, size, c, optional, validator)
+#define NUM_PARENT		Parameter(data, sizeof(T), c, optional, validator)
 
 #define STR_MIN_MAX		m_MinLength(0), m_MaxLength(ULLONG_MAX)
+#define NUM_MIN_MAX		m_Min(std::numeric_limits<T>().max()), m_Max(std::numeric_limits<T>().min())
+
 #define LONG_MIN_MAX	m_Min(LONG_MIN), m_Max(LONG_MAX)
 #define REAL_MIN_MAX	m_Min(DOUBLE_MIN), m_Max(DOUBLE_MAX)
 
@@ -77,8 +82,8 @@ class NumberParameter : public Parameter
 {
 public:
 	NumberParameter() = default;
-	NumberParameter(void* data, size_t size, char c, bool optional, std::function<bool(void*)> validator = {});
-	NumberParameter(void* data, size_t size, char c, bool optional, T min, T max, std::function<bool(void*)> = {});
+	NumberParameter(void* data, char c, bool optional, std::function<bool(void*)> validator = {});
+	NumberParameter(void* data, char c, bool optional, T min, T max, std::function<bool(void*)> = {});
 	
 	bool Validate(void* data) override;
 	void Parse(void* data) override;
@@ -88,8 +93,12 @@ private:
 	T m_Max;
 };
 
-typedef NumberParameter<long> IntegerParameter;
-typedef NumberParameter<double> RealParameter;
+typedef NumberParameter<short> ShortParam;
+typedef NumberParameter<int> IntParam;
+typedef NumberParameter<long> LongParam;
+
+typedef NumberParameter<float> FloatParam;
+typedef NumberParameter<double> DoubleParam;
 
 class Getoptpp
 {
@@ -100,8 +109,8 @@ public:
 	void Parse(int argc, char** argv);
 
 	void AddStringParam(StringParameter p);
-	void AddIntParam(IntegerParameter p);
-	void AddRealParam(RealParameter p);
+	template<typename T>
+	void AddNumberParam(NumberParameter<T> param);
 
 private:
 	std::string m_HelpMessage;
@@ -206,13 +215,9 @@ bool StringParameter::Validate(void* data)
 		return inPool;
 
 	// Regex constraint
-	try
-	{
-		m_Regex.assign(m_RegexPattern);
-		if (!std::regex_match(str.c_str(), m_Regex))
-			return false;
-	}
-	catch (const std::regex_error& e) {}
+	m_Regex.assign(m_RegexPattern);
+	if (!std::regex_match(str.c_str(), m_Regex))
+		return false;
 
 	if (m_Validator)
 		return m_Validator(data);
@@ -220,32 +225,41 @@ bool StringParameter::Validate(void* data)
 }
 
 StringParameter::StringParameter(void* data, size_t size, char c, bool optional, std::function<bool(void*)> validator) :
-	PARAM_PARENT, STR_MIN_MAX, STR_POOL, STR_REGEX {}
+	STR_PARENT, STR_MIN_MAX, STR_POOL, STR_REGEX {}
 
 StringParameter::StringParameter(void* data, size_t size, char c, bool optional, std::string regex,
-	std::function<bool(void*)> validator) : PARAM_PARENT, STR_MIN_MAX, STR_POOL, m_Regex(std::regex(regex)), m_RegexPattern(regex){}
+	std::function<bool(void*)> validator) : STR_PARENT, STR_MIN_MAX, STR_POOL, m_Regex(std::regex(regex)), m_RegexPattern(regex){}
 
 StringParameter::StringParameter(void* data, size_t size, char c, bool optional, std::string* pool, size_t poolSize,
-	std::function<bool(void*)> validator) : PARAM_PARENT, STR_MIN_MAX, m_Pool(pool), m_PoolSize(poolSize), STR_REGEX{}
+	std::function<bool(void*)> validator) : STR_PARENT, STR_MIN_MAX, m_Pool(pool), m_PoolSize(poolSize), STR_REGEX{}
 
 StringParameter::StringParameter(void* data, size_t size, char c, bool optional, size_t minLength, size_t maxLength, 
-	std::function<bool(void*)> validator) : PARAM_PARENT, m_MinLength(minLength), m_MaxLength(maxLength), STR_POOL, STR_REGEX{}
+	std::function<bool(void*)> validator) : STR_PARENT, m_MinLength(minLength), m_MaxLength(maxLength), STR_POOL, STR_REGEX{}
 
 /************************************************************ NUMBER PARAMETER ***********************************************************/
 
-void IntegerParameter::Parse(void* data)
+template<typename T>
+NumberParameter<T>::NumberParameter(void* data, char c, bool optional, std::function<bool(void*)> validator) :
+	NUM_PARENT, NUM_MIN_MAX {}
+
+template<typename T>
+NumberParameter<T>::NumberParameter(void* data, char c, bool optional, T min, T max, std::function<bool(void*)> validator) :
+	NUM_PARENT, m_Min(min), m_Max(max) {}
+
+template <typename T>
+void NumberParameter<T>::Parse(void* data)
 {
-	const char* dummy = "080721";
-	long val = strtol((char*)data, (char**)&dummy, 10);
+	T tmp;
+	std::istringstream iss((char*)data);
+	iss >> tmp;
 
-	if (*dummy == '\0')
-		memcpy(m_Data, &val, m_DataSize);
-
+	memcpy(m_Data, &tmp, m_DataSize);
 }
 
-bool IntegerParameter::Validate(void* data)
+template <typename T>
+bool NumberParameter<T>::Validate(void* data)
 {
-	long param = *(long*)data;
+	T param = *(T*)data;
 	if (param < m_Min || param > m_Max)
 		return false;
 
@@ -253,40 +267,6 @@ bool IntegerParameter::Validate(void* data)
 		return m_Validator(data);
 	return true;
 }
-
-IntegerParameter::NumberParameter<long>(void* data, size_t size, char c, bool optional, std::function<bool(void*)> validator) :
-	PARAM_PARENT, LONG_MIN_MAX {}
-
-IntegerParameter::NumberParameter<long>(void* data, size_t size, char c, bool optional, long min, long max, std::function<bool(void*)> validator) :
-	PARAM_PARENT, m_Min(min), m_Max(max){}
-
-/************************************************************ REAL PARAMETER ***********************************************************/
-
-void RealParameter::Parse(void* data)
-{
-	const char* dummy = "080721";
-	double val = strtod((char*)data, (char**)&dummy);
-
-	if (*dummy == '\0')
-		*(double*)m_Data = val;
-}
-
-bool RealParameter::Validate(void* data)
-{
-	double param = *(double*)data;
-	if (param < m_Min || param > m_Max)
-		return false;
-
-	if (m_Validator)
-		return m_Validator(data);
-	return true;
-}
-
-RealParameter::NumberParameter<double>(void* data, size_t size, char c, bool optional, std::function<bool(void*)> validator) :
-	PARAM_PARENT, LONG_MIN_MAX{}
-
-RealParameter::NumberParameter<double>(void* data, size_t size, char c, bool optional, double min, double max, std::function<bool(void*)> validator) :
-	PARAM_PARENT, m_Min(min), m_Max(max){}
 
 
 /************************************************************ GETOPTPP ***********************************************************/
@@ -347,18 +327,10 @@ void Getoptpp::Parse(int argc, char** argv)
 	}
 }
 
-void Getoptpp::AddIntParam(IntegerParameter p)
+template<typename T>
+void Getoptpp::AddNumberParam(NumberParameter<T> p)
 {
-	IntegerParameter* toAdd = new IntegerParameter();
-	memcpy(toAdd, &p, sizeof(p));
-
-	m_Parameters[m_CurrSize] = toAdd;
-	m_CurrSize++;
-}
-
-void Getoptpp::AddRealParam(RealParameter p)
-{
-	RealParameter* toAdd = new RealParameter();
+	NumberParameter<T>* toAdd = new NumberParameter<T>();
 	memcpy(toAdd, &p, sizeof(p));
 
 	m_Parameters[m_CurrSize] = toAdd;
