@@ -6,12 +6,7 @@
 #endif
 
 #include <sstream>
-#include <stdint.h>
-#include <stddef.h>
 #include <functional>
-
-#define STR_PARENT		Parameter(data, 0, c, optional, validator)
-#define NUM_PARENT		Parameter(data, sizeof(T), c, optional, validator)
 
 #define GETOPTPP_ERR_NO_ERROR					0
 #define GETOPTPP_ERR_TOO_MANY_ARGUMENTS			-1
@@ -39,14 +34,16 @@ class Parameter
 
 public:
 	Parameter() = default;
-	Parameter(void* data, size_t size, char c, bool optional, std::function<bool(void*)> validator = {}) :
-		m_Data(data), m_DataSize(size), m_Char(c), m_Optional(optional), m_Validator(validator) {}
+	virtual ~Parameter() = default;
+	Parameter(void* data, size_t size, char c, bool optional, bool isFlag, std::function<bool(void*)> validator = {}) :
+		m_Data(data), m_DataSize(size), m_Char(c), m_Optional(optional), m_IsFlag(isFlag), m_Validator(validator) {}
 
 	virtual GetoptParseError Parse(void* data) { return GETOPTPP_ERR_NO_ERROR; }
 
 protected:
 	char m_Char;
 	bool m_Optional;
+	bool m_IsFlag;
 
 	void* m_Data;
 	size_t m_DataSize;
@@ -57,14 +54,12 @@ class StringParameter : public Parameter
 {
 public:
 	StringParameter() = default;
+	~StringParameter() = default;
 	StringParameter(void* data, char c, bool optional, std::function<bool(void*)> validator = {});
 
 	GetoptParseError Parse(void* data) override;
 
 private:
-	size_t m_MinLength;
-	size_t m_MaxLength;
-
 	std::string* m_Pool;
 	uint32_t m_PoolSize;
 
@@ -75,13 +70,10 @@ class NumberParameter : public Parameter
 {
 public:
 	NumberParameter() = default;
+	~NumberParameter() = default;
 	NumberParameter(void* data, char c, bool optional, std::function<bool(void*)> validator = {});
 	
 	GetoptParseError Parse(void* data) override;
-
-private:
-	T m_Min;
-	T m_Max;
 };
 
 class BoolParameter : public Parameter
@@ -89,7 +81,8 @@ class BoolParameter : public Parameter
 	friend class Getoptpp;
 public:
 	BoolParameter() = default;
-	BoolParameter(void* data, char c);
+	~BoolParameter() = default;
+	BoolParameter(void* data, char c, bool optional);
 
 	GetoptParseError Parse(void* data) override;
 };
@@ -201,13 +194,13 @@ GetoptParseError StringParameter::Parse(void* data)
 }
 
 StringParameter::StringParameter(void* data, char c, bool optional, std::function<bool(void*)> validator) :
-	STR_PARENT {}
+	Parameter(data, 0, c, optional, false, validator) {}
 
 /************************************************************ NUMBER PARAMETER ***********************************************************/
 
 template<typename T>
 NumberParameter<T>::NumberParameter(void* data, char c, bool optional, std::function<bool(void*)> validator) :
-	NUM_PARENT {}
+	Parameter(data, sizeof(T), c, optional, false, validator) {}
 
 template <typename T>
 GetoptParseError NumberParameter<T>::Parse(void* data)
@@ -238,7 +231,7 @@ GetoptParseError NumberParameter<T>::Parse(void* data)
 
 /************************************************************ BOOL PARAMETER ***********************************************************/
 
-BoolParameter::BoolParameter(void* data, char c) : Parameter(data, sizeof(bool), c, true, {}) {}
+BoolParameter::BoolParameter(void* data, char c, bool optional) : Parameter(data, sizeof(bool), c, optional, true, {}) {}
 
 GetoptParseError BoolParameter::Parse(void* data) 
 {
@@ -252,10 +245,15 @@ GetoptParseError BoolParameter::Parse(void* data)
 Getoptpp::Getoptpp(uint32_t nOptions, const std::string& helpMessage) : m_HelpMessage(helpMessage)
 {
 	m_Parameters = new Parameter*[nOptions];
+	for (uint32_t i = 0; i < nOptions; i++)
+		m_Parameters[i] = nullptr;
 }
 
 Getoptpp::~Getoptpp()
 {
+	for (uint32_t i = 0; i < m_CurrSize; i++)
+		if (m_Parameters[i] != nullptr)
+			delete m_Parameters[i];
 	delete[] m_Parameters;
 }
 
@@ -271,11 +269,10 @@ GetoptParseError Getoptpp::Parse(int argc, char** argv)
 	for (uint32_t i = 0; i < m_CurrSize; i++)
 	{
 		optStr += m_Parameters[i]->m_Char;
-		if (!m_Parameters[i]->m_Optional)
-		{
+		if (!m_Parameters[i]->m_IsFlag)
 			optStr += ":";
+		if (!m_Parameters[i]->m_Optional)
 			notOptional += m_Parameters[i]->m_Char;
-		}
 	}
 
 	int c;
@@ -353,8 +350,7 @@ GetoptParseError Getoptpp::Parse(int argc, char** argv)
 template<typename T>
 void Getoptpp::AddNumberParam(NumberParameter<T> p)
 {
-	NumberParameter<T>* toAdd = new NumberParameter<T>();
-	memcpy(toAdd, &p, sizeof(p));
+	NumberParameter<T>* toAdd = new NumberParameter<T>(p.m_Data, p.m_Char, p.m_Optional, p.m_Validator);
 
 	m_Parameters[m_CurrSize] = toAdd;
 	m_CurrSize++;
@@ -362,8 +358,7 @@ void Getoptpp::AddNumberParam(NumberParameter<T> p)
 
 void Getoptpp::AddStringParam(StringParameter p)
 {
-	StringParameter* toAdd = new StringParameter();
-	memcpy(toAdd, &p, sizeof(p));
+	StringParameter* toAdd = new StringParameter(p.m_Data, p.m_Char, p.m_Optional, p.m_Validator);
 
 	m_Parameters[m_CurrSize] = toAdd;
 	m_CurrSize++;
@@ -371,8 +366,7 @@ void Getoptpp::AddStringParam(StringParameter p)
 
 void Getoptpp::AddBoolParam(BoolParameter p)
 {
-	BoolParameter* toAdd = new BoolParameter();
-	memcpy(toAdd, &p, sizeof(p));
+	BoolParameter* toAdd = new BoolParameter(p.m_Data, p.m_Char, p.m_Optional);
 	*(bool*)toAdd->m_Data = false;
 
 	m_Parameters[m_CurrSize] = toAdd;

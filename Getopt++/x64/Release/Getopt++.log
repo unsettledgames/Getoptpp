@@ -1,0 +1,36 @@
+﻿Build started 05/03/2023 15:23:54.
+Logging verbosity is set to: Normal.     1>Project "C:\dev\Getoptpp\Getopt++\Getopt++.vcxproj" on node 2 (Build target(s)).
+     1>PrepareForBuild:
+         Creating directory "C:\dev\Getoptpp\x64\Release\".
+         Creating directory "x64\Release\Getopt++.tlog\".
+       InitializeBuildStatus:
+         Creating "x64\Release\Getopt++.tlog\unsuccessfulbuild" because "AlwaysCreate" was specified.
+       VcpkgTripletSelection:
+         Using triplet "x64-windows" from "C:\Program Files\vcpkg\installed\x64-windows\"
+         Using normalized configuration "Release"
+       ClCompile:
+         C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.31.31103\bin\HostX64\x64\CL.exe /c /I"C:\Program Files\vcpkg\installed\x64-windows\include" /Zi /nologo /W3 /WX- /diagnostics:column /sdl /O2 /Oi /GL /D NDEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /permissive- /Fo"x64\Release\\" /Fd"x64\Release\vc143.pdb" /external:W3 /Gd /TP /FC /errorReport:prompt Main.cpp
+         Main.cpp
+       Link:
+         C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.31.31103\bin\HostX64\x64\link.exe /ERRORREPORT:PROMPT /OUT:"C:\dev\Getoptpp\x64\Release\Getopt++.exe" /INCREMENTAL:NO /NOLOGO /LIBPATH:"C:\Program Files\vcpkg\installed\x64-windows\lib" /LIBPATH:"C:\Program Files\vcpkg\installed\x64-windows\lib\manual-link" kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib "C:\Program Files\vcpkg\installed\x64-windows\lib\*.lib" /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\dev\Getoptpp\x64\Release\Getopt++.pdb" /SUBSYSTEM:CONSOLE /OPT:REF /OPT:ICF /LTCG:incremental /LTCGOUT:"x64\Release\Getopt++.iobj" /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\dev\Getoptpp\x64\Release\Getopt++.lib" /MACHINE:X64 x64\Release\Main.obj
+         Generating code
+         Previous IPDB not found, fall back to full compilation.
+         All 215 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+         Finished generating code
+         Getopt++.vcxproj -> C:\dev\Getoptpp\x64\Release\Getopt++.exe
+       AppLocalFromInstalled:
+         pwsh.exe -ExecutionPolicy Bypass -noprofile -File "C:\Program Files\vcpkg\scripts\buildsystems\msbuild\applocal.ps1" "C:\dev\Getoptpp\x64\Release\Getopt++.exe" "C:\Program Files\vcpkg\installed\x64-windows\bin" "x64\Release\Getopt++.tlog\Getopt++.write.1u.tlog" "x64\Release\vcpkg.applocal.log"
+         "pwsh.exe" non è riconosciuto come comando interno o esterno,
+          un programma eseguibile o un file batch.
+         The command "pwsh.exe -ExecutionPolicy Bypass -noprofile -File "C:\Program Files\vcpkg\scripts\buildsystems\msbuild\applocal.ps1" "C:\dev\Getoptpp\x64\Release\Getopt++.exe" "C:\Program Files\vcpkg\installed\x64-windows\bin" "x64\Release\Getopt++.tlog\Getopt++.write.1u.tlog" "x64\Release\vcpkg.applocal.log"" exited with code 9009.
+         "C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe" -ExecutionPolicy Bypass -noprofile -File "C:\Program Files\vcpkg\scripts\buildsystems\msbuild\applocal.ps1" "C:\dev\Getoptpp\x64\Release\Getopt++.exe" "C:\Program Files\vcpkg\installed\x64-windows\bin" "x64\Release\Getopt++.tlog\Getopt++.write.1u.tlog" "x64\Release\vcpkg.applocal.log"
+       FinalizeBuildStatus:
+         Deleting file "x64\Release\Getopt++.tlog\unsuccessfulbuild".
+         Touching "x64\Release\Getopt++.tlog\Getopt++.lastbuildstate".
+     1>Done Building Project "C:\dev\Getoptpp\Getopt++\Getopt++.vcxproj" (Build target(s)).
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:07.30
