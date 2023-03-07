@@ -1,2 +1,2 @@
 # Getoptpp
-C++ wrapper and abstraction layer around getopt
+C++ header-only wrapper and abstraction layer around getopt.
