@@ -55,9 +55,9 @@ NumberParam<int> intParam(&testInt, 'i', false);
 obtObj.AddNumberParam<int>({&testInt, 'i', false, [min, max](void* data) {
   int num = *(int*)data;
   if (num < min || num > max)
-    return true;
-  else
     return false;
+  else
+    return true;
 }});
 
 obtObj.Parse();
