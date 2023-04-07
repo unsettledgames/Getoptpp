@@ -6,6 +6,8 @@
 #endif
 
 #include <sstream>
+#include <vector>
+#include <memory>
 #include <functional>
 
 // No errors occurred during the parsing
@@ -27,122 +29,21 @@
 
 typedef int GetoptParseError;
 
-#ifdef GETOPTPP_PRINT_OUTPUT
-#define CheckParamArraySize()		if (m_CurrSize >= m_MaxSize)																	 \
-									{																								 \
-										std::cout << "Couldn't add parameter, the number of already existing parameters exceeded "	 \
-											<< "the maximum specified when creating the Getoptpp object." << std::endl;				 \
-										return;																						 \
-									}
-#else
-#define CheckParamArraySize()		if (m_CurrSize >= m_MaxSize)																	 \
-										return;																						 
-#endif
-
 #ifndef _WIN32
 #include <unistd.h>
 #else
-int opterr = 1, optind = 1, optopt, optreset;
-const char* optarg;
-int getopt(int nargc, char* const nargv[], const char* ostr);
-#endif
-
-/**
-*	Parameter: base class used to represent a command-line argument. A parameter needs:
-*		- A pointer to variable that holds the value of that parameter
-*		- The size of said data
-*		- The character used by getopt to recognize it
-*		- A boolean that specifies whether the parameter is a flag or not (whether it accepts an option or not)
-*		- An optional validation function, that is called to ensure that the obtained value respects some user-defined constraints
-*/
-class Parameter
+static int opterr = 1, optind = 1, optopt, optreset;
+static const char* optarg;
+static inline int getopt(int nargc, char* const nargv[], const char* ostr)
 {
-	friend class Getoptpp;
-
-public:
-	Parameter() = default;
-	virtual ~Parameter() = default;
-	Parameter(void* data, size_t size, char c, bool optional, bool isFlag, std::function<bool(void*)> validator = {}) :
-		m_Data(data), m_DataSize(size), m_Char(c), m_Optional(optional), m_IsFlag(isFlag), m_Validator(validator) {}
-
-	virtual GetoptParseError Parse(void* data) { return GETOPTPP_ERR_NO_ERROR; }
-
-protected:
-	char m_Char;
-	bool m_Optional;
-	bool m_IsFlag;
-
-	void* m_Data;
-	size_t m_DataSize;
-	std::function<bool(void*)> m_Validator;
-};
-
-class StringParameter : public Parameter
-{
-public:
-	StringParameter() = default;
-	~StringParameter() = default;
-	StringParameter(void* data, char c, bool optional, std::function<bool(void*)> validator = {});
-
-	GetoptParseError Parse(void* data) override;
-};
-
-template <typename T>
-class NumberParameter : public Parameter
-{
-public:
-	NumberParameter() = default;
-	~NumberParameter() = default;
-	NumberParameter(void* data, char c, bool optional, std::function<bool(void*)> validator = {});
-	
-	GetoptParseError Parse(void* data) override;
-};
-
-class BoolParameter : public Parameter
-{
-	friend class Getoptpp;
-public:
-	BoolParameter() = default;
-	~BoolParameter() = default;
-	BoolParameter(void* data, char c, bool optional);
-
-	GetoptParseError Parse(void* data) override;
-};
-
-class Getoptpp
-{
-public:
-	Getoptpp(uint32_t nOptions, const std::string& helpMessage = "");
-	~Getoptpp();
-
-	GetoptParseError Parse(int argc, char** argv);
-
-	void AddStringParam(StringParameter p);
-	void AddBoolParam(BoolParameter p);
-	template<typename T>
-	void AddNumberParam(NumberParameter<T> param);
-
-private:
-	std::string m_HelpMessage;
-	Parameter** m_Parameters;
-
-	uint32_t m_CurrSize;
-	uint32_t m_MaxSize;
-
-};
-
-#ifdef GETOPTPP_IMPL
-
-#ifdef _WIN32
-int getopt(int nargc, char* const nargv[], const char* ostr) {
 	static const char* place = "";        // option letter processing
 	const char* oli;                      // option letter list index
 
 	// update scanning pointer
 	if (optreset || !*place)
-	{             
+	{
 		optreset = 0;
-		if (optind >= nargc || *(place = nargv[optind]) != '-') 
+		if (optind >= nargc || *(place = nargv[optind]) != '-')
 		{
 			place = "";
 			return -1;
@@ -150,10 +51,10 @@ int getopt(int nargc, char* const nargv[], const char* ostr) {
 
 		while (*place == '-')
 			place++;
-	}                                       
+	}
 
 	// option letter okay?
-	if ((optopt = (int)*place++) == (int)':' || !(oli = strchr(ostr, optopt))) 
+	if ((optopt = (int)*place++) == (int)':' || !(oli = strchr(ostr, optopt)))
 	{
 		// if the user didn't specify '-' as an option,  assume it means -1.
 		if (optopt == (int)'-')
@@ -167,17 +68,17 @@ int getopt(int nargc, char* const nargv[], const char* ostr) {
 		return ('?');
 	}
 
-	if (*++oli != ':') 
+	if (*++oli != ':')
 	{                    // don't need argument
 		optarg = NULL;
 		if (!*place)
 			++optind;
 	}
-	else 
+	else
 	{                                // need an argument
 		if (*place)                         // no white space
 			optarg = place;
-		else if (nargc <= ++optind) 
+		else if (nargc <= ++optind)
 		{       // no arg
 			place = "";
 			if (*ostr == ':')
@@ -197,210 +98,181 @@ int getopt(int nargc, char* const nargv[], const char* ostr) {
 }
 #endif
 
-/************************************************************ STRING PARAMETER ***********************************************************/
+/**
+*	Parameter: base class used to represent a command-line argument. A parameter needs:
+*		- A reference to variable that holds the value of that parameter
+*		- The character used by getopt to recognize it
+*		- A boolean that specifies whether the parameter is a flag or not (whether it accepts an option or not)
+*		- An optional validation function, that is called to ensure that the obtained value respects some user-defined constraints
+*/
 
-GetoptParseError StringParameter::Parse(void* data)
+class ParameterBase
 {
-	std::string param = std::string((char*)data);
-	*(std::string*)m_Data = param;
+	friend class Getoptpp;
 
-	if (m_Validator)
-	{
-		if (m_Validator(m_Data))
-			return GETOPTPP_ERR_NO_ERROR;
-		else
-			return GETOPTPP_ERR_INVALID_VALUE;
+public:
+	inline ParameterBase() = default;
+	inline virtual ~ParameterBase() = default;
+	inline ParameterBase(char c, bool optional, bool isFlag) : m_Char(c), m_Optional(optional), m_IsFlag(isFlag) {}
+
+	inline virtual GetoptParseError Parse(std::string s)
+	{ 
+		return GETOPTPP_ERR_NO_ERROR; 
 	}
 
-	return GETOPTPP_ERR_NO_ERROR;
-}
-
-StringParameter::StringParameter(void* data, char c, bool optional, std::function<bool(void*)> validator) :
-	Parameter(data, 0, c, optional, false, validator) {}
-
-/************************************************************ NUMBER PARAMETER ***********************************************************/
+protected:
+	char m_Char;
+	bool m_Optional;
+	bool m_IsFlag;	
+};
 
 template<typename T>
-NumberParameter<T>::NumberParameter(void* data, char c, bool optional, std::function<bool(void*)> validator) :
-	Parameter(data, sizeof(T), c, optional, false, validator) {}
-
-template <typename T>
-GetoptParseError NumberParameter<T>::Parse(void* data)
+class Parameter : public ParameterBase
 {
-	T tmp;
-	std::istringstream iss((char*)data);
-	iss >> tmp;
+public:
+	inline Parameter() = default;
+	inline Parameter(T& data, char c, bool optional, bool isFlag, std::function<bool(T)> validator = {}) :
+		ParameterBase(c, optional, isFlag), m_Data(data), m_Validator(validator) {}
 
-	if (iss.fail())
+	inline virtual ~Parameter() = default;
+	
+	inline virtual GetoptParseError Parse(std::string s) override
 	{
-#ifdef GETOPTPP_PRINT_OUTPUT
-		std::cout << "Error parsing option -" << m_Char << std::endl;
-#endif
-		return GETOPTPP_ERR_PARSE_ERROR;
-	}
-
-	memcpy(m_Data, &tmp, m_DataSize);
-	if (m_Validator)
-	{
-		if (m_Validator(m_Data))
-			return GETOPTPP_ERR_NO_ERROR;
-		else
-			return GETOPTPP_ERR_INVALID_VALUE;
-	}
-
-	return GETOPTPP_ERR_NO_ERROR;
-}
-
-/************************************************************ BOOL PARAMETER ***********************************************************/
-
-BoolParameter::BoolParameter(void* data, char c, bool optional) : Parameter(data, sizeof(bool), c, optional, true, {}) {}
-
-GetoptParseError BoolParameter::Parse(void* data) 
-{
-	*(bool*)m_Data = true;
-	return GETOPTPP_ERR_NO_ERROR; 
-}
-
-/************************************************************ GETOPTPP ***********************************************************/
-
-
-Getoptpp::Getoptpp(uint32_t nOptions, const std::string& helpMessage) : m_HelpMessage(helpMessage)
-{
-	m_CurrSize = 0;
-	m_MaxSize = nOptions;
-
-	m_Parameters = new Parameter*[nOptions];
-	for (uint32_t i = 0; i < nOptions; i++)
-		m_Parameters[i] = nullptr;
-}
-
-Getoptpp::~Getoptpp()
-{
-	for (uint32_t i = 0; i < m_CurrSize; i++)
-		if (m_Parameters[i] != nullptr)
-			delete m_Parameters[i];
-	delete[] m_Parameters;
-}
-
-GetoptParseError Getoptpp::Parse(int argc, char** argv)
-{
-	GetoptParseError ret = GETOPTPP_ERR_NO_ERROR;
-
-	bool printUsage = false;
-	std::string optStr = "";
-	std::string notOptional = "";
-	std::string bools = "";
-
-	for (uint32_t i = 0; i < m_CurrSize; i++)
-	{
-		optStr += m_Parameters[i]->m_Char;
-		if (!m_Parameters[i]->m_IsFlag)
-			optStr += ":";
-		if (!m_Parameters[i]->m_Optional)
-			notOptional += m_Parameters[i]->m_Char;
-	}
-
-	int c;
-
-	while ((c = getopt(argc, argv, optStr.c_str())) != -1) 
-	{
-		if (c == 'h' || c == '?')
+		if constexpr (std::is_integral_v<T> || std::is_floating_point_v<T>)
 		{
-			ret = GETOPTPP_ERR_ASKED_USAGE;
-			printUsage = true;
-			break;
+			std::istringstream iss(s.c_str());
+			iss >> m_Data;
+
+			if (iss.fail())
+			{
+#ifdef GETOPTPP_PRINT_OUTPUT
+				std::cout << "Error parsing option -" << m_Char << std::endl;
+#endif
+				return GETOPTPP_ERR_PARSE_ERROR;
+			}
+		}
+		else
+			m_Data = s;
+
+		if (m_Validator)
+		{
+			if (m_Validator(m_Data))
+				return GETOPTPP_ERR_NO_ERROR;
+			else
+				return GETOPTPP_ERR_INVALID_VALUE;
+		}
+	}
+
+private:
+	T& m_Data;
+	std::function<bool(T)> m_Validator;
+};
+
+class Getoptpp
+{
+public:
+	Getoptpp(const std::string& helpMessage = "") : m_HelpMessage(helpMessage) {}
+
+	inline GetoptParseError Parse(int argc, char** argv)
+	{
+		GetoptParseError ret = GETOPTPP_ERR_NO_ERROR;
+
+		bool printUsage = false;
+		std::string optStr = "";
+		std::string notOptional = "";
+		std::string bools = "";
+
+		for (uint32_t i = 0; i < m_Parameters.size(); i++)
+		{
+			optStr += m_Parameters[i]->m_Char;
+			if (!m_Parameters[i]->m_IsFlag)
+				optStr += ":";
+			if (!m_Parameters[i]->m_Optional)
+				notOptional += m_Parameters[i]->m_Char;
 		}
 
-		bool found = false;
-		for (uint32_t i = 0; i < m_CurrSize && !found; i++)
-		{
-			if (m_Parameters[i]->m_Char == c)
-			{
-				if (!m_Parameters[i]->m_Optional)
-					notOptional[notOptional.find(m_Parameters[i]->m_Char)] = '?';
-				found = true;
+		int c;
 
-				m_Parameters[i]->Parse((void*)optarg);
+		while ((c = getopt(argc, argv, optStr.c_str())) != -1)
+		{
+			if (c == 'h' || c == '?')
+			{
+				ret = GETOPTPP_ERR_ASKED_USAGE;
+				printUsage = true;
+				break;
+			}
+
+			bool found = false;
+			for (uint32_t i = 0; i < m_Parameters.size() && !found; i++)
+			{
+				if (m_Parameters[i]->m_Char == c)
+				{
+					if (!m_Parameters[i]->m_Optional)
+						notOptional[notOptional.find(m_Parameters[i]->m_Char)] = '?';
+					found = true;
+
+					m_Parameters[i]->Parse(optarg);
+				}
+			}
+
+			if (!found)
+			{
+#ifdef GETOPTPP_PRINT_OUTPUT
+				std::cerr << "Unknown option: " << (char)c << std::endl;
+				printUsage = true;
+#endif
+				ret = GETOPTPP_ERR_UNKNOWN_OPTION;
 			}
 		}
 
-		if (!found)
+		bool allFound = true;
+		for (uint32_t i = 0; i < notOptional.length() && allFound; i++)
 		{
+			if (notOptional[i] != '?')
+			{
+				allFound = false;
 #ifdef GETOPTPP_PRINT_OUTPUT
-			std::cerr << "Unknown option: " << (char)c << std::endl;
-			printUsage = true;
+				std::cout << "Unspecified non-optional argument -" << notOptional[i] << std::endl;
 #endif
-			ret = GETOPTPP_ERR_UNKNOWN_OPTION;
+				ret = GETOPTPP_ERR_UNSPECIFIED_NON_OPTIONAL;
+			}
 		}
-	}
 
-	bool allFound = true;
-	for (uint32_t i = 0; i < notOptional.length() && allFound; i++)
-	{
-		if (notOptional[i] != '?')
+
+		if (optind > argc)
 		{
-			allFound = false;
-#ifdef GETOPTPP_PRINT_OUTPUT
-			std::cout << "Unspecified non-optional argument -" << notOptional[i] << std::endl;
-#endif
-			ret = GETOPTPP_ERR_UNSPECIFIED_NON_OPTIONAL;
-		}
-	}
-
-
-	if (optind > argc) 
-	{
-		if (allFound)
-		{
+			if (allFound)
+			{
 #ifdef GETOPTPP_PRINT_OUTPUT
 #ifdef _WIN32
-			std::cerr << "Too many arguments or argument before other options\n";
+				std::cerr << "Too many arguments or argument before other options\n";
 #else
-			std::cerr << "Too many arguments\n";
+				std::cerr << "Too many arguments\n";
 #endif
-			printUsage = true;
+				printUsage = true;
 #endif
-			ret = GETOPTPP_ERR_TOO_MANY_ARGUMENTS;
+				ret = GETOPTPP_ERR_TOO_MANY_ARGUMENTS;
+			}
 		}
-	}
 
 #ifdef GETOPTPP_PRINT_OUTPUT
-	if (printUsage)
-		std::cout << m_HelpMessage << std::endl;
+		if (printUsage)
+			std::cout << m_HelpMessage << std::endl;
 #endif
 
-	return ret;
-}
+		return ret;
+	}
 
-template<typename T>
-void Getoptpp::AddNumberParam(NumberParameter<T> p)
-{
-	CheckParamArraySize();
-	NumberParameter<T>* toAdd = new NumberParameter<T>(p.m_Data, p.m_Char, p.m_Optional, p.m_Validator);
+	template<typename T>
+	inline void AddParam(T& data, char c, bool optional, std::function<bool(T)> validator = {})
+	{
+		m_Parameters.push_back(std::make_unique<Parameter<T>>(data, c, optional, std::is_same<bool, T>(), validator));
+	}
 
-	m_Parameters[m_CurrSize] = toAdd;
-	m_CurrSize++;
-}
+private:
+	std::string m_HelpMessage;
+	std::vector<std::unique_ptr<ParameterBase>> m_Parameters;
 
-void Getoptpp::AddStringParam(StringParameter p)
-{
-	CheckParamArraySize();
-	StringParameter* toAdd = new StringParameter(p.m_Data, p.m_Char, p.m_Optional, p.m_Validator);
+};
 
-	m_Parameters[m_CurrSize] = toAdd;
-	m_CurrSize++;
-}
-
-void Getoptpp::AddBoolParam(BoolParameter p)
-{
-	CheckParamArraySize();
-	BoolParameter* toAdd = new BoolParameter(p.m_Data, p.m_Char, p.m_Optional);
-	*(bool*)toAdd->m_Data = false;
-
-	m_Parameters[m_CurrSize] = toAdd;
-	m_CurrSize++;
-}
-
-
-#endif
 #endif
