@@ -62,7 +62,7 @@ static inline int getopt(int nargc, char* const nargv[], const char* ostr)
 		if (!*place)
 			++optind;
 #ifdef GETOPTPP_PRINT_OUTPUT
-		if (opterr && *ostr != ':')
+		if (opterr && *ostr != ':' && optopt != 'h' && optopt != '?')
 			std::cout << "illegal option -" << (char)optopt << "\n";
 #endif
 		return ('?');
